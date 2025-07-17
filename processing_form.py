@@ -36,6 +36,8 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
 
     check_set_answer = set()  # множество для проверки есть ли такой вопрос или нет
 
+    count_question = 1
+
 
     df = pd.read_excel(path_to_file,dtype=str)
 
@@ -47,10 +49,9 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
             cont_name_column = idx+1
         # отбрасываем обычные колонки
         if ' / ' not in name_column:
-            # Сохраняем частотную таблицу
+            # Создаем частотную таблицу
             dct_df[idx+1] = df[name_column].value_counts(sort=True).to_frame().rename(columns={'count':'Количество'}).reset_index()
-            sev_df[name_column] = df[name_column]
-            all_df[name_column] = df[name_column]
+            count_question += 1
             continue
         else:
             lst_union_name_column = [name_column] # список для хранения названий колонок
@@ -79,8 +80,7 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
                             counts_df = counts_df.reset_index()
                             counts_df.columns = [question,'Количество']
                             counts_df.sort_values(by='Количество',ascending=False,inplace=True)
-                            dct_df[idx + 1] = counts_df
-
+                            dct_df[idx+1] = counts_df
                             break
 
 
@@ -97,8 +97,10 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
                         counts_df = counts_df.reset_index()
                         counts_df.columns = [question, 'Количество']
                         counts_df.sort_values(by='Количество', ascending=False, inplace=True)
-                        dct_df[idx + 1] = counts_df
+                        dct_df[idx+1] = counts_df
                         check_set_answer.add(question)
+
+                        count_question += 1
 
             else:
                 continue
@@ -141,6 +143,8 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
 
 if __name__ == '__main__':
     main_file = 'data/Яндекс таблица.xlsx'
+    main_file = 'data/2025-07-17 Anketa 9 klass.xlsx'
+    # main_file = 'data/Гугл таблица.xlsx'
     main_end_folder = 'data/Результат'
 
 

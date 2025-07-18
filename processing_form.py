@@ -32,6 +32,7 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
     """
     dct_df = dict() # словарь для хранения листовых датафреймов
     dct_symbols = dict() # словарь для хранения датафреймов с перемещаемыми колонками и сортировкой по количеству символов
+    dct_all_cols = dict() # словарь для частотных датафреймов по каждой колонке таблицы
 
     sev_df = pd.DataFrame() # выходной датафрейм для нескольких вопросов
     all_df = pd.DataFrame() # выходной датафрейм для нескольких вопросов и шкалы
@@ -44,6 +45,11 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
     df = pd.read_excel(path_to_file,dtype=str)
 
     for idx, name_column in enumerate(df.columns):
+        # Создаем датафрейм для частотных таблиц по каждой колонке
+        every_column_df = count_value_in_column(df.copy(), name_column)
+        dct_all_cols[idx + 1] = every_column_df
+
+
         # получаем последующую колонку
         if idx +1 == len(df.columns):
             # проверяем достижение предела
@@ -110,12 +116,16 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
             else:
                 continue
 
-    with pd.ExcelWriter(f'{path_end_folder}/Общий результат.xlsx', engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(f'{path_end_folder}/Свод Яндекс.xlsx', engine='xlsxwriter') as writer:
         for name_sheet,out_df in dct_df.items():
             out_df.to_excel(writer,sheet_name=str(name_sheet),index=False)
 
-    with pd.ExcelWriter(f'{path_end_folder}/Символы.xlsx', engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(f'{path_end_folder}/Для работы с отзывами.xlsx', engine='xlsxwriter') as writer:
         for name_sheet,out_df in dct_symbols.items():
+            out_df.to_excel(writer,sheet_name=str(name_sheet),index=False)
+
+    with pd.ExcelWriter(f'{path_end_folder}/Свод по каждой колонке.xlsx', engine='xlsxwriter') as writer:
+        for name_sheet,out_df in dct_all_cols.items():
             out_df.to_excel(writer,sheet_name=str(name_sheet),index=False)
 
 

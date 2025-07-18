@@ -11,6 +11,7 @@ def count_value_in_column(df:pd.DataFrame,name_column:str):
     :return: датафрейм
     """
     lst_count = []  # список для хранения значений которые были разделены точкой с запятой
+    df[name_column] = df[name_column].astype(str)
     tmp_lst = df[name_column].tolist()
     for value_str in tmp_lst:
         lst_count.extend(value_str.split(';'))

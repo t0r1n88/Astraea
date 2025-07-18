@@ -42,17 +42,33 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
     df = pd.read_excel(path_to_file,dtype=str)
 
     for idx, name_column in enumerate(df.columns):
-        # получаем предыдущую и последующую колонку
+        # получаем последующую колонку
         if idx +1 == len(df.columns):
+            # проверяем достижение предела
             cont_name_column = idx
         else:
             cont_name_column = idx+1
         # отбрасываем обычные колонки
         if ' / ' not in name_column:
-            # Создаем частотную таблицу
-            dct_df[idx+1] = df[name_column].value_counts(sort=True).to_frame().rename(columns={'count':'Количество'}).reset_index()
-            count_question += 1
-            continue
+            # Проверяем наличие точки с запятой, что может свидетельствовать о гугловской таблице
+            contains_at_symbol = list(df[name_column].str.contains(';'))
+            if True not in contains_at_symbol:
+                # Создаем частотную таблицу
+                simple_df = df[name_column].value_counts(sort=True).to_frame().rename(columns={'count':'Количество'}).reset_index()
+                simple_df['Доля в % от общего'] = round(
+                    simple_df[f'Количество'] / simple_df['Количество'].sum(), 2) * 100
+                simple_df.loc['Итого'] = simple_df.sum(numeric_only=True)
+
+                dct_df[idx+1] = simple_df
+                count_question += 1
+                continue
+            else:
+                # создаем частотную таблицу
+                counts_df = count_value_in_column(df.copy(), name_column)
+                dct_df[idx + 1] = counts_df
+
+                count_question += 1
+
         else:
             lst_union_name_column = [name_column] # список для хранения названий колонок
             lst_answer = name_column.split(' / ')
@@ -69,17 +85,8 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
                         if temp_idx+1 == threshold:
                             sev_df[question] = df[lst_union_name_column].apply(extract_answer_several_option, axis=1)
                             all_df[question] = df[lst_union_name_column].apply(extract_answer_several_option, axis=1)
-
-                            lst_count = [] # список для хранения значений которые были разделены точкой с запятой
-                            tmp_lst = sev_df[question].tolist()
-                            for value_str in tmp_lst:
-                                lst_count.extend(value_str.split(';'))
-
-                            # Делаем частотную таблицу и сохраняем в словарь
-                            counts_df = pd.DataFrame.from_dict(dict(Counter(lst_count)),orient='index')
-                            counts_df = counts_df.reset_index()
-                            counts_df.columns = [question,'Количество']
-                            counts_df.sort_values(by='Количество',ascending=False,inplace=True)
+                            # создаем частотную таблицу
+                            counts_df = count_value_in_column(sev_df.copy(), question)
                             dct_df[idx+1] = counts_df
                             break
 
@@ -87,16 +94,9 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
                     else:
                         sev_df[question] = df[lst_union_name_column].apply(extract_answer_several_option,axis=1)
                         all_df[question] = df[lst_union_name_column].apply(extract_answer_several_option,axis=1)
-                        lst_count = []  # список для хранения значений которые были разделены точкой с запятой
-                        tmp_lst = sev_df[question].tolist()
-                        for value_str in tmp_lst:
-                            lst_count.extend(value_str.split(';'))
+                        # создаем частотную таблицу
+                        counts_df = count_value_in_column(sev_df.copy(),question)
 
-                        # Делаем частотную таблицу и сохраняем в словарь
-                        counts_df = pd.DataFrame.from_dict(dict(Counter(lst_count)), orient='index')
-                        counts_df = counts_df.reset_index()
-                        counts_df.columns = [question, 'Количество']
-                        counts_df.sort_values(by='Количество', ascending=False, inplace=True)
                         dct_df[idx+1] = counts_df
                         check_set_answer.add(question)
 
@@ -143,7 +143,7 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
 
 if __name__ == '__main__':
     main_file = 'data/Яндекс таблица.xlsx'
-    main_file = 'data/2025-07-17 Anketa 9 klass.xlsx'
+    # main_file = 'data/2025-07-17 Anketa 9 klass.xlsx'
     # main_file = 'data/Гугл таблица.xlsx'
     main_end_folder = 'data/Результат'
 

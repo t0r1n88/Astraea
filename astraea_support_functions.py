@@ -30,3 +30,23 @@ def count_value_in_column(df:pd.DataFrame,name_column:str):
 
     return counts_df
 
+
+
+def sort_by_symbols_df(df:pd.DataFrame,name_column:str):
+    """
+    Функция для переноса колонки в начало таблицы и сортировки по количеству символов
+    :param df: копия датафрейма
+    :param name_column: обрабатываемая колонка
+    :return: датафрейм
+    """
+    # переносим колонку в начало
+    first_col = df.pop(name_column)
+    df.insert(0,name_column,first_col)
+    # сортируем по количеству символов
+    sorted_df = df.sort_values(by=name_column, key=lambda col: col.str.len(),ascending=False)
+    return sorted_df
+
+
+
+
+

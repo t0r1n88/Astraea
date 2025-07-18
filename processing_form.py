@@ -1,7 +1,7 @@
 """
 Функция для обработки данных из Яндекс и гугл форм
 """
-from astraea_support_functions import count_value_in_column
+from astraea_support_functions import count_value_in_column,sort_by_symbols_df
 import pandas as pd
 import openpyxl
 from collections import Counter
@@ -31,6 +31,8 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
     :return:
     """
     dct_df = dict() # словарь для хранения листовых датафреймов
+    dct_symbols = dict() # словарь для хранения датафреймов с перемещаемыми колонками и сортировкой по количеству символов
+
     sev_df = pd.DataFrame() # выходной датафрейм для нескольких вопросов
     all_df = pd.DataFrame() # выходной датафрейм для нескольких вопросов и шкалы
 
@@ -50,6 +52,9 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
             cont_name_column = idx+1
         # отбрасываем обычные колонки
         if ' / ' not in name_column:
+            # создаем датафрейм для последующй сортировки
+            sort_df = sort_by_symbols_df(df.copy(),name_column)
+            dct_symbols[idx+1] = sort_df
             # Проверяем наличие точки с запятой, что может свидетельствовать о гугловской таблице
             contains_at_symbol = list(df[name_column].str.contains(';'))
             if True not in contains_at_symbol:
@@ -107,6 +112,10 @@ def extract_data_from_form(path_to_file:str,path_end_folder:str):
 
     with pd.ExcelWriter(f'{path_end_folder}/Общий результат.xlsx', engine='xlsxwriter') as writer:
         for name_sheet,out_df in dct_df.items():
+            out_df.to_excel(writer,sheet_name=str(name_sheet),index=False)
+
+    with pd.ExcelWriter(f'{path_end_folder}/Символы.xlsx', engine='xlsxwriter') as writer:
+        for name_sheet,out_df in dct_symbols.items():
             out_df.to_excel(writer,sheet_name=str(name_sheet),index=False)
 
 
